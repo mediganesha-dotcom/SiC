@@ -1,0 +1,132 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum RequestStatus {
+  OPEN
+  MATCHED
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
+enum ResponseType {
+  ACCEPT
+  DECLINE
+}
+
+model User {
+  id                String   @id @default(cuid())
+  email             String   @unique
+  passwordHash      String
+  name              String
+  city              String
+  postalCode        String
+  createdAt         DateTime @default(now())
+
+  requestsCreated   LendingRequest[]   @relation("Requester")
+  requestsMatched   LendingRequest[]   @relation("Lender")
+  responses         RequestResponse[]
+  messages          ChatMessage[]
+  pushSubscriptions PushSubscription[]
+  ratingsGiven      Rating[]           @relation("RatingAuthor")
+  ratingsReceived   Rating[]           @relation("RatingSubject")
+
+  @@index([city])
+  @@index([postalCode])
+}
+
+model LendingRequest {
+  id                   String        @id @default(cuid())
+  requesterId          String
+  requester            User          @relation("Requester", fields: [requesterId], references: [id])
+  text                 String
+  photoUrl             String?
+  city                 String
+  postalCode           String
+  status               RequestStatus @default(OPEN)
+
+  lenderId             String?
+  lender               User?         @relation("Lender", fields: [lenderId], references: [id])
+
+  requesterConfirmedAt DateTime?
+  lenderConfirmedAt    DateTime?
+  pickupTime           DateTime?
+  pickupLocation       String?
+  returnTime           DateTime?
+  returnLocation       String?
+
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+  matchedAt            DateTime?
+  confirmedAt          DateTime?
+  completedAt          DateTime?
+  cancelledAt          DateTime?
+
+  responses            RequestResponse[]
+  messages             ChatMessage[]
+  ratings              Rating[]
+
+  @@index([status, city])
+  @@index([status, postalCode])
+}
+
+model RequestResponse {
+  id        String         @id @default(cuid())
+  requestId String
+  request   LendingRequest @relation(fields: [requestId], references: [id])
+  userId    String
+  user      User           @relation(fields: [userId], references: [id])
+  type      ResponseType
+  createdAt DateTime       @default(now())
+
+  @@unique([requestId, userId])
+  @@index([requestId])
+}
+
+model ChatMessage {
+  id        String         @id @default(cuid())
+  requestId String
+  request   LendingRequest @relation(fields: [requestId], references: [id])
+  senderId  String
+  sender    User           @relation(fields: [senderId], references: [id])
+  body      String
+  createdAt DateTime       @default(now())
+
+  @@index([requestId, createdAt])
+}
+
+model Rating {
+  id        String         @id @default(cuid())
+  requestId String
+  request   LendingRequest @relation(fields: [requestId], references: [id])
+  authorId  String
+  author    User           @relation("RatingAuthor", fields: [authorId], references: [id])
+  subjectId String
+  subject   User           @relation("RatingSubject", fields: [subjectId], references: [id])
+  stars     Int
+  comment   String?
+  createdAt DateTime       @default(now())
+
+  @@unique([requestId, authorId])
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
