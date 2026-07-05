@@ -1,12 +1,14 @@
 import { notFound } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { STATUS_LABELS } from "@/lib/requestStatus";
+import { STATUS_LABELS, STATUS_BADGE_CLASSES } from "@/lib/requestStatus";
 import { RespondButtons } from "@/components/RespondButtons";
 import { ChatPanel } from "@/components/ChatPanel";
 import { LogisticsPanel } from "@/components/LogisticsPanel";
 import { RatingForm } from "@/components/RatingForm";
 import { CancelButton } from "@/components/CancelButton";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 
 export default async function RequestDetailPage({
   params,
@@ -39,7 +41,8 @@ export default async function RequestDetailPage({
   const canRespond = !isOwn && lendingRequest.status === "OPEN" && !myResponse;
   const canChat = (isOwn || isLender) && lendingRequest.lenderId !== null;
   const canCancel =
-    isOwn && (lendingRequest.status === "OPEN" || lendingRequest.status === "MATCHED");
+    isOwn &&
+    (lendingRequest.status === "OPEN" || lendingRequest.status === "MATCHED");
 
   const myRating =
     lendingRequest.status === "COMPLETED" && (isOwn || isLender)
@@ -52,38 +55,46 @@ export default async function RequestDetailPage({
 
   return (
     <div className="mx-auto flex w-full max-w-lg flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Anfrage</h1>
-        <span className="text-xs font-medium uppercase text-gray-500">
-          {STATUS_LABELS[lendingRequest.status] ?? lendingRequest.status}
-        </span>
-      </div>
-      {lendingRequest.photoUrl && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={lendingRequest.photoUrl}
-          alt=""
-          className="max-h-80 w-full rounded object-cover"
-        />
-      )}
-      <p>{lendingRequest.text}</p>
-      <p className="text-sm text-gray-500">
-        von {lendingRequest.requester.name} · {lendingRequest.city},{" "}
-        {lendingRequest.postalCode}
-      </p>
-      {isOwn && (
-        <p className="text-xs text-gray-400">Das ist deine eigene Anfrage.</p>
-      )}
-      {lendingRequest.lender && (
-        <p className="text-sm text-gray-500">
-          Vergeben an {lendingRequest.lender.name}
-        </p>
-      )}
-      {myResponse?.type === "DECLINE" && (
-        <p className="text-xs text-gray-400">Du hast diese Anfrage abgelehnt.</p>
-      )}
-      {canRespond && <RespondButtons requestId={lendingRequest.id} />}
-      {canCancel && <CancelButton requestId={lendingRequest.id} />}
+      <Card>
+        <CardContent className="flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <h1 className="text-xl font-semibold">Anfrage</h1>
+            <Badge className={STATUS_BADGE_CLASSES[lendingRequest.status]}>
+              {STATUS_LABELS[lendingRequest.status] ?? lendingRequest.status}
+            </Badge>
+          </div>
+          {lendingRequest.photoUrl && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={lendingRequest.photoUrl}
+              alt=""
+              className="max-h-80 w-full rounded-lg object-cover"
+            />
+          )}
+          <p>{lendingRequest.text}</p>
+          <p className="text-sm text-muted-foreground">
+            von {lendingRequest.requester.name} · {lendingRequest.city},{" "}
+            {lendingRequest.postalCode}
+          </p>
+          {isOwn && (
+            <p className="text-xs text-muted-foreground">
+              Das ist deine eigene Anfrage.
+            </p>
+          )}
+          {lendingRequest.lender && (
+            <p className="text-sm text-muted-foreground">
+              Vergeben an {lendingRequest.lender.name}
+            </p>
+          )}
+          {myResponse?.type === "DECLINE" && (
+            <p className="text-xs text-muted-foreground">
+              Du hast diese Anfrage abgelehnt.
+            </p>
+          )}
+          {canRespond && <RespondButtons requestId={lendingRequest.id} />}
+          {canCancel && <CancelButton requestId={lendingRequest.id} />}
+        </CardContent>
+      </Card>
       {canChat && (
         <LogisticsPanel
           requestId={lendingRequest.id}

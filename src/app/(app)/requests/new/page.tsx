@@ -4,14 +4,24 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { toast } from "sonner";
 import {
   createRequestSchema,
   type CreateRequestInput,
 } from "@/lib/validation/request";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 export default function NewRequestPage() {
   const router = useRouter();
-  const [formError, setFormError] = useState<string | null>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const {
@@ -21,7 +31,6 @@ export default function NewRequestPage() {
   } = useForm<CreateRequestInput>({ resolver: zodResolver(createRequestSchema) });
 
   const onSubmit = async (data: CreateRequestInput) => {
-    setFormError(null);
     let photoUrl: string | undefined;
 
     if (photoFile) {
@@ -35,7 +44,7 @@ export default function NewRequestPage() {
       setUploading(false);
       if (!uploadRes.ok) {
         const body = await uploadRes.json().catch(() => null);
-        setFormError(body?.error ?? "Foto konnte nicht hochgeladen werden.");
+        toast.error(body?.error ?? "Foto konnte nicht hochgeladen werden.");
         return;
       }
       const uploadBody = await uploadRes.json();
@@ -49,7 +58,7 @@ export default function NewRequestPage() {
     });
 
     if (!res.ok) {
-      setFormError("Anfrage konnte nicht erstellt werden.");
+      toast.error("Anfrage konnte nicht erstellt werden.");
       return;
     }
 
@@ -60,37 +69,43 @@ export default function NewRequestPage() {
 
   return (
     <div className="mx-auto flex w-full max-w-lg flex-col gap-4">
-      <h1 className="text-xl font-semibold">Neue Anfrage</h1>
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-3">
-        <div className="flex flex-col gap-1">
-          <textarea
-            placeholder="z.B. Hey, ich brauche eine Bohrmaschine für Samstag"
-            rows={4}
-            {...register("text")}
-            className="rounded border px-3 py-2"
-          />
-          {errors.text && (
-            <p className="text-sm text-red-600">{errors.text.message}</p>
-          )}
-        </div>
-        <div className="flex flex-col gap-1">
-          <label className="text-sm text-gray-600">Foto (optional)</label>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => setPhotoFile(e.target.files?.[0] ?? null)}
-            className="text-sm"
-          />
-        </div>
-        {formError && <p className="text-sm text-red-600">{formError}</p>}
-        <button
-          type="submit"
-          disabled={isSubmitting || uploading}
-          className="rounded bg-black px-3 py-2 text-white disabled:opacity-50"
-        >
-          {uploading ? "Foto wird hochgeladen…" : "Absenden"}
-        </button>
-      </form>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-xl">Neue Anfrage</CardTitle>
+          <CardDescription>
+            Beschreibe kurz, was du dir leihen möchtest.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="text">Beschreibung</Label>
+              <Textarea
+                id="text"
+                placeholder="z.B. Hey, ich brauche eine Bohrmaschine für Samstag"
+                rows={4}
+                {...register("text")}
+              />
+              {errors.text && (
+                <p className="text-sm text-destructive">{errors.text.message}</p>
+              )}
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="photo">Foto (optional)</Label>
+              <input
+                id="photo"
+                type="file"
+                accept="image/*"
+                onChange={(e) => setPhotoFile(e.target.files?.[0] ?? null)}
+                className="text-sm text-muted-foreground file:mr-3 file:rounded-md file:border file:border-input file:bg-transparent file:px-3 file:py-1.5 file:text-sm file:font-medium"
+              />
+            </div>
+            <Button type="submit" disabled={isSubmitting || uploading} className="mt-2">
+              {uploading ? "Foto wird hochgeladen…" : "Absenden"}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 }

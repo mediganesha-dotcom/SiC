@@ -1,7 +1,11 @@
 import Link from "next/link";
+import { PackageSearch, ListChecks } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { RequestCard } from "@/components/RequestCard";
+import { EmptyState } from "@/components/EmptyState";
+import { buttonVariants } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default async function RequestsPage() {
   const session = await auth();
@@ -26,39 +30,46 @@ export default async function RequestsPage() {
   ]);
 
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-col gap-8">
+    <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Anfragen in deiner Nähe</h1>
-        <Link
-          href="/requests/new"
-          className="rounded bg-black px-3 py-2 text-sm text-white"
-        >
+        <h1 className="text-xl font-semibold">Anfragen</h1>
+        <Link href="/requests/new" className={buttonVariants()}>
           Neue Anfrage
         </Link>
       </div>
 
-      <section className="flex flex-col gap-3">
-        {nearbyRequests.length === 0 && (
-          <p className="text-sm text-gray-500">
-            Aktuell keine offenen Anfragen in deiner Nähe.
-          </p>
-        )}
-        {nearbyRequests.map((r) => (
-          <RequestCard key={r.id} request={r} requesterName={r.requester.name} />
-        ))}
-      </section>
-
-      <section className="flex flex-col gap-3">
-        <h2 className="text-lg font-semibold">Deine Anfragen</h2>
-        {myRequests.length === 0 && (
-          <p className="text-sm text-gray-500">
-            Du hast noch keine Anfrage erstellt.
-          </p>
-        )}
-        {myRequests.map((r) => (
-          <RequestCard key={r.id} request={r} />
-        ))}
-      </section>
+      <Tabs defaultValue="nearby">
+        <TabsList>
+          <TabsTrigger value="nearby">In deiner Nähe</TabsTrigger>
+          <TabsTrigger value="mine">Deine Anfragen</TabsTrigger>
+        </TabsList>
+        <TabsContent value="nearby" className="flex flex-col gap-3 pt-4">
+          {nearbyRequests.length === 0 ? (
+            <EmptyState
+              icon={PackageSearch}
+              text="Aktuell keine offenen Anfragen in deiner Nähe."
+            />
+          ) : (
+            nearbyRequests.map((r) => (
+              <RequestCard
+                key={r.id}
+                request={r}
+                requesterName={r.requester.name}
+              />
+            ))
+          )}
+        </TabsContent>
+        <TabsContent value="mine" className="flex flex-col gap-3 pt-4">
+          {myRequests.length === 0 ? (
+            <EmptyState
+              icon={ListChecks}
+              text="Du hast noch keine Anfrage erstellt."
+            />
+          ) : (
+            myRequests.map((r) => <RequestCard key={r.id} request={r} />)
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
