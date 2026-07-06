@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
@@ -27,11 +28,14 @@ export default async function AppLayout({
       <PushOptIn />
       <nav className="flex items-center justify-between gap-2 border-b bg-card px-3 py-3 sm:px-6">
         <div className="flex min-w-0 items-center gap-2">
-          <Link
-            href="/home"
-            className="hidden shrink-0 text-lg font-semibold text-primary sm:mr-2 sm:inline"
-          >
-            Sharing is Caring
+          <Link href="/home" className="hidden shrink-0 sm:mr-2 sm:inline-flex">
+            <Image
+              src="/icons/icon-192.png"
+              alt="Sharing is Caring"
+              width={32}
+              height={32}
+              className="rounded-md"
+            />
           </Link>
           <NavLinks />
         </div>
