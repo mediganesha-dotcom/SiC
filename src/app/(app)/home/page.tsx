@@ -68,6 +68,9 @@ export default async function HomePage() {
           label="Offene Chats"
           value={openChats.length}
           icon={MessageCircle}
+          href={
+            openChats.length === 1 ? `/requests/${openChats[0].id}` : "#chats"
+          }
         />
       </div>
 
@@ -83,7 +86,7 @@ export default async function HomePage() {
         )}
       </section>
 
-      <section className="flex flex-col gap-3">
+      <section id="chats" className="flex flex-col gap-3 scroll-mt-20">
         <h2 className="text-lg font-semibold">Offene Chats</h2>
         {openChats.length === 0 ? (
           <EmptyState icon={MessageCircle} text="Aktuell keine offenen Chats." />
